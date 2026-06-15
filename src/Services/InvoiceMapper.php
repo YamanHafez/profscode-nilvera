@@ -177,7 +177,7 @@ class InvoiceMapper
 
         if ($isArchive) {
             $invoiceInfo['SalesPlatform'] = (int) ($data['EArchiveSalesChannel'] ?? 0);
-            $invoiceInfo['SendType'] = ($data['EArchiveSendingType'] ?? "KAGIT");
+            $invoiceInfo['SendType'] = ($data['EArchiveSendingType'] ?? "ELEKTRONIK");
             $invoiceInfo['InternetInfo'] = $this->mapInternetInfo($data);
         }
 

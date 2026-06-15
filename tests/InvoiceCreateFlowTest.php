@@ -69,7 +69,7 @@ class InvoiceCreateFlowTest extends TestCase
         $model = Nilvera::mapToModel($this->sampleData(), isArchive: true);
 
         $this->assertArrayHasKey('ArchiveInvoice', $model);
-        $this->assertSame('KAGIT', $model['ArchiveInvoice']['InvoiceInfo']['SendType']);
+        $this->assertSame('ELEKTRONIK', $model['ArchiveInvoice']['InvoiceInfo']['SendType']);
 
         $result = Nilvera::createDraft($model, 'earchive');
 
