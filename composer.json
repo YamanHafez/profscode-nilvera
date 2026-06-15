@@ -13,10 +13,22 @@
         "php": "^8.2",
         "illuminate/support": "^10.0|^11.0|^12.0|^13.0"
     },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^10.5|^11.0"
+    },
     "autoload": {
         "psr-4": {
             "ProfsCode\\Nilvera\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ProfsCode\\Nilvera\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     },
     "extra": {
         "laravel": {

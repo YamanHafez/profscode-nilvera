@@ -144,8 +144,8 @@ class InvoiceMapper
         $invoiceInfo = [
             'UUID' => $data['InvoiceUUID'] ?? (string) Str::uuid(),
             'TemplateUUID' => $data['TemplateUuid'] ?? $data['TemplateUUID'] ?? null,
-            'InvoiceProfile' => ($data['Scenario'] ?? '') == 'Ticari' ? 2 : 1,
-            'InvoiceType' => (int) ($data['mInvoiceType'] ?? 0),
+            'InvoiceProfile' => $data['InvoiceProfile'] ?? (($data['Scenario'] ?? '') == 'Ticari' ? 2 : 1),
+            'InvoiceType' => $data['InvoiceType'] ?? (int) ($data['mInvoiceType'] ?? 0),
             'InvoiceSerieOrNumber' => $data['Series'] ?? null,
             'IssueDate' => ($data['IssueDate'] ?? date('Y-m-d')) . 'T' . date('H:i:s'),
             'CurrencyCode' => $data['CurrencyCode'] ?? 'TRY',
