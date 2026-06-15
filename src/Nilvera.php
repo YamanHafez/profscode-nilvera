@@ -886,7 +886,7 @@ class Nilvera
     public function sendNewInvoice(array $model, string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
-        return $this->client->post("{$prefix}/Send", $model) ?? [];
+        return $this->client->post("{$prefix}/Send/Model", $model) ?? [];
     }
 
     // Taslağı onayla ve gönder
