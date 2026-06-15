@@ -5,6 +5,10 @@ return [
     'base_url' => env('NILVERA_BASE_URL', 'https://api.nilvera.com'),
     'username' => env('NILVERA_USERNAME', ''),
     'password' => env('NILVERA_PASSWORD', ''),
+
+    // Fatura modelinde 'Series' belirtilmediğinde kullanılacak varsayılan seri kodu.
+    // Nilvera, InvoiceInfo.InvoiceSerieOrNumber alanının boş olmasına izin vermez.
+    'default_series' => env('NILVERA_DEFAULT_SERIES', ''),
     'company' => [
         'name' => env('NILVERA_COMPANY_NAME', ''),
         'tax_number' => env('NILVERA_COMPANY_TAX_NUMBER', ''),

@@ -146,7 +146,7 @@ class InvoiceMapper
             'TemplateUUID' => $data['TemplateUuid'] ?? $data['TemplateUUID'] ?? '00000000-0000-0000-0000-000000000000',
             'InvoiceProfile' => $data['InvoiceProfile'] ?? (($data['Scenario'] ?? '') == 'Ticari' ? 2 : 1),
             'InvoiceType' => $data['InvoiceType'] ?? (int) ($data['mInvoiceType'] ?? 0),
-            'InvoiceSerieOrNumber' => $data['Series'] ?? null,
+            'InvoiceSerieOrNumber' => $data['Series'] ?? config('nilvera.default_series') ?: null,
             'IssueDate' => ($data['IssueDate'] ?? date('Y-m-d')) . 'T' . date('H:i:s'),
             'CurrencyCode' => $data['CurrencyCode'] ?? 'TRY',
             'ExchangeRate' => isset($data['ExchangeRate']) ? (float) $data['ExchangeRate'] : null,
