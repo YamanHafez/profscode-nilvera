@@ -37,6 +37,19 @@ class NilveraClient
             ]);
     }
 
+    // Hata durumunda Nilvera'nın döndürdüğü tam yanıt gövdesini exception mesajına ekler
+    // (Laravel'in varsayılan RequestException mesajı yanıtı 500 karakterde kesiyor)
+    protected function throwHandler()
+    {
+        return function ($response, $e) {
+            throw new \RuntimeException(
+                "Nilvera API error ({$response->status()}): " . $response->body(),
+                0,
+                $e
+            );
+        };
+    }
+
     protected function asCurl(string $method, string $url, array $data = []): string
     {
         $headers = [
@@ -70,7 +83,7 @@ class NilveraClient
         if ($this->debug) {
             return $this->asCurl('GET', $url, $query);
         }
-        return $this->client()->get($url, $query)->throw()->json();
+        return $this->client()->get($url, $query)->throw($this->throwHandler())->json();
     }
 
     public function getRaw(string $url, array $query = [])
@@ -78,7 +91,7 @@ class NilveraClient
         if ($this->debug) {
             return $this->asCurl('GET', $url, $query);
         }
-        return $this->client()->get($url, $query)->throw()->body();
+        return $this->client()->get($url, $query)->throw($this->throwHandler())->body();
     }
 
     public function post(string $url, array $data = [])
@@ -86,7 +99,7 @@ class NilveraClient
         if ($this->debug) {
             return $this->asCurl('POST', $url, $data);
         }
-        return $this->client()->post($url, $data)->throw()->json();
+        return $this->client()->post($url, $data)->throw($this->throwHandler())->json();
     }
 
     public function postRaw(string $url, array $data = [])
@@ -94,7 +107,7 @@ class NilveraClient
         if ($this->debug) {
             return $this->asCurl('POST', $url, $data);
         }
-        return $this->client()->post($url, $data)->throw()->body();
+        return $this->client()->post($url, $data)->throw($this->throwHandler())->body();
     }
 
     public function delete(string $url, array $data = [])
@@ -102,7 +115,7 @@ class NilveraClient
         if ($this->debug) {
             return $this->asCurl('DELETE', $url, $data);
         }
-        return $this->client()->withBody(json_encode($data), 'application/json')->delete($url)->throw()->json();
+        return $this->client()->withBody(json_encode($data), 'application/json')->delete($url)->throw($this->throwHandler())->json();
     }
 
     public function put(string $url, array $data = [])
@@ -110,7 +123,7 @@ class NilveraClient
         if ($this->debug) {
             return $this->asCurl('PUT', $url, $data);
         }
-        return $this->client()->put($url, $data)->throw()->json();
+        return $this->client()->put($url, $data)->throw($this->throwHandler())->json();
     }
 
     public function upload(string $url, string $filePath, string $fileName, array $data = [])
@@ -126,6 +139,6 @@ class NilveraClient
             $request->attach($key, $value);
         }
 
-        return $request->post($url)->throw()->json();
+        return $request->post($url)->throw($this->throwHandler())->json();
     }
 }
