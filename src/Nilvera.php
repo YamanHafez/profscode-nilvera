@@ -17,6 +17,12 @@ class Nilvera
         $this->mapper = $mapper;
     }
 
+    public function debug(bool $state = true): self
+    {
+        $this->client->debug($state);
+        return $this;
+    }
+
     /**
      * Verileri Nilvera modeline çevirir.
      * 
@@ -49,19 +55,19 @@ class Nilvera
     }
 
     // Kredi bilgilerini getirir
-    public function getCredits(): array
+    public function getCredits(): array|string
     {
-        return $this->client->get('General/GetCredits') ?? [];
+        return $this->client->get('General/Credits') ?? [];
     }
 
     // VKN sorgulama (E-fatura mükellefi mi?)
-    public function checkTaxNumber(string $vkn): array
+    public function checkTaxNumber(string $vkn): array|string
     {
         return $this->client->get("General/GlobalCompany/Check/TaxNumber/{$vkn}", ['globalUserType' => 'Invoice']) ?? [];
     }
 
     // Global müşteri detaylarını getirir
-    public function getGlobalCustomerInfo(string $vkn): array
+    public function getGlobalCustomerInfo(string $vkn): array|string
     {
         return $this->client->get("General/GlobalCompany/GetGlobalCustomerInfo/{$vkn}", ['globalUserType' => 'Invoice']) ?? [];
     }
@@ -136,8 +142,127 @@ class Nilvera
         ];
     }
 
+    // Firma bilgilerini getirir
+    public function getCompanyInfo(): array|string
+    {
+        return $this->client->get('General/Company') ?? [];
+    }
+
+    // Firma bilgilerini güncelle
+    public function updateCompanyInfo(array $data): array|string
+    {
+        return $this->client->put('General/Company', $data) ?? [];
+    }
+
+    // Firmanın modüllerini getirir
+    public function getCompanyModules(): array|string
+    {
+        return $this->client->get('General/Company/Modules') ?? [];
+    }
+
+    // Firma sertifikalarını getirir
+    public function getCompanyCertificates(): array|string
+    {
+        return $this->client->get('General/Company/Certificate') ?? [];
+    }
+
+    // Firmaya sertifika ekler
+    public function addCompanyCertificate(array $data): bool|string
+    {
+        return $this->client->post('General/Company/Certificate', $data) ?? false;
+    }
+
+    // Firma sertifikasını güncelle
+    public function updateCompanyCertificate(array $data): bool|string
+    {
+        return $this->client->put('General/Company/Certificate', $data) ?? false;
+    }
+
+    // Seri numarasına göre sertifika getirir
+    public function getCompanyCertificateBySerial(string $serialNumber): array|string
+    {
+        return $this->client->get("General/Company/Certificate/{$serialNumber}") ?? [];
+    }
+
+    // Firma sertifikasını siler
+    public function deleteCompanyCertificate(int $id): bool|string
+    {
+        return $this->client->delete("General/Company/Certificate/{$id}") ?? false;
+    }
+
+    // Kullanıcıya tanımlı firmaları getirir
+    public function getUserCompanies(): array|string
+    {
+        return $this->client->get('General/Company/List') ?? [];
+    }
+
+    // Firma kimlik bilgilerini listeler
+    public function getCompanyIdentities(): array|string
+    {
+        return $this->client->get('General/CompanyIdentification') ?? [];
+    }
+
+    // Firmaya yeni kimlik bilgisi ekler
+    public function addCompanyIdentity(string $name, string $value): array|string
+    {
+        $query = http_build_query(['Name' => $name, 'Value' => $value]);
+        return $this->client->post("General/CompanyIdentification?{$query}") ?? [];
+    }
+
+    // Firmadan kimlik bilgisi siler
+    public function deleteCompanyIdentity(int $id): bool|string
+    {
+        return $this->client->delete("General/CompanyIdentification/{$id}") ?? false;
+    }
+
+    // Aktif kampanyaları getirir
+    public function getCampaigns(): array|string
+    {
+        return $this->client->get('General/Campaigns') ?? [];
+    }
+
+    // GİB kullanıcı adı ve parolasını getirir
+    public function getGibUserCredentials(): array|string
+    {
+        return $this->client->get('General/GibEArchiveAccount') ?? [];
+    }
+
+    // GİB kullanıcı adı ve parolasını güncelle
+    public function updateGibUserCredentials(string $username, string $password): bool|string
+    {
+        $query = http_build_query(['UserName' => $username, 'Password' => $password]);
+        return $this->client->put("General/GibEArchiveAccount?{$query}") ?? false;
+    }
+
+    // Mail/SMS/WhatsApp bildirim ayarlarını getirir
+    public function getMailSettings(): array|string
+    {
+        return $this->client->get('General/Mailing/Setting') ?? [];
+    }
+
+    // WhatsApp özelliğini aç/kapat
+    public function setWhatsappSetting(bool $isActive): bool|string
+    {
+        $state = $isActive ? 'true' : 'false';
+        return $this->client->post("General/Mailing/Whatsapp/Setting/{$state}") ?? false;
+    }
+
+    // Mail özelliğini aç/kapat
+    public function setMailSetting(bool $isActive): bool|string
+    {
+        $state = $isActive ? 'true' : 'false';
+        return $this->client->post("General/Mailing/Email/Setting/{$state}") ?? false;
+    }
+
+    // SMS özelliğini aç/kapat
+    public function setSmsSetting(bool $isActive): bool|string
+    {
+        $state = $isActive ? 'true' : 'false';
+        return $this->client->post("General/Mailing/Sms/Setting/{$state}") ?? false;
+    }
+
     // Döviz kurları
-    public function getExchangeRates(): array
+    public function getExchangeRates(): array|string
     {
         return $this->client->get('General/ExchangeRate') ?? [
             'USDBuy' => '0,0000',
@@ -150,30 +275,30 @@ class Nilvera
     }
 
     // Gelen son faturalar
-    public function getLastInvoices(int $pageSize = 10, int $pageIndex = 1): array
+    public function getLastInvoices(int $pageSize = 10, int $pageIndex = 1): array|string
     {
-        return $this->client->get('EInvoice/GetInvoices', [
+        return $this->client->get('einvoice/Statistics/Purchase/Last', [
             'PageSize' => $pageSize,
             'PageIndex' => $pageIndex,
-        ])['Items'] ?? [];
+        ]) ?? [];
     }
 
     // Giden son faturalar
-    public function getLastSaleInvoices(string $mode = 'einvoice', int $pageSize = 10, int $pageIndex = 1): array
+    public function getLastSaleInvoices(string $mode = 'einvoice', int $pageSize = 10, int $pageIndex = 1): array|string
     {
-        $endpoint = $this->getEndpointByMode($mode, 'Sale');
+        $endpoint = $mode === 'earchive' ? 'earchive/Statistics/Last' : 'einvoice/Statistics/Sale/Last';
         return $this->client->get($endpoint, [
             'PageSize' => $pageSize,
             'PageIndex' => $pageIndex,
-        ])['Items'] ?? [];
+        ]) ?? [];
     }
 
     /**
      * Get daily stats for purchases.
      */
-    public function getPurchaseDailyStats(string $startDate, string $endDate): array
+    public function getPurchaseDailyStats(string $startDate, string $endDate): array|string
     {
-        return $this->client->get('EInvoice/GetPurchaseDailyStats', [
+        return $this->client->get('einvoice/Statistics/Purchase/Daily', [
             'StartDate' => $startDate,
             'EndDate' => $endDate,
         ]) ?? [];
@@ -182,9 +307,9 @@ class Nilvera
     /**
      * Get daily stats for sales.
      */
-    public function getSaleDailyStats(string $startDate, string $endDate, string $mode = 'einvoice'): array
+    public function getSaleDailyStats(string $startDate, string $endDate, string $mode = 'einvoice'): array|string
     {
-        $endpoint = $this->getEndpointByMode($mode, 'SaleDailyStats');
+        $endpoint = $mode === 'einvoice' ? 'einvoice/Statistics/Sale/Daily' : 'earchive/Statistics/Daily';
         return $this->client->get($endpoint, [
             'StartDate' => $startDate,
             'EndDate' => $endDate,
@@ -194,9 +319,9 @@ class Nilvera
     /**
      * Get summary stats for purchases.
      */
-    public function getPurchaseSummaryStats(string $startDate, string $endDate): array
+    public function getPurchaseSummaryStats(string $startDate, string $endDate): array|string
     {
-        return $this->client->get('EInvoice/GetPurchaseSummaryStats', [
+        return $this->client->get('einvoice/Statistics/Purchase', [
             'StartDate' => $startDate,
             'EndDate' => $endDate,
         ]) ?? $this->getEmptySummaryStats();
@@ -205,9 +330,9 @@ class Nilvera
     /**
      * Get summary stats for sales.
      */
-    public function getSaleSummaryStats(string $startDate, string $endDate, string $mode = 'einvoice'): array
+    public function getSaleSummaryStats(string $startDate, string $endDate, string $mode = 'einvoice'): array|string
     {
-        $endpoint = $this->getEndpointByMode($mode, 'SaleSummaryStats');
+        $endpoint = $mode === 'einvoice' ? 'einvoice/Statistics/Sale' : 'earchive/Statistics';
         return $this->client->get($endpoint, [
             'StartDate' => $startDate,
             'EndDate' => $endDate,
@@ -215,26 +340,23 @@ class Nilvera
     }
 
     // Serileri getir
-    public function getSeries(string $mode = 'einvoice', int $pageSize = 100, int $page = 1, array $params = []): array
+    public function getSeries(string $mode = 'einvoice', ?string $search = null, int $pageSize = 100, int $page = 1): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
 
         $queryParams = array_merge([
             'PageSize' => $pageSize,
-            'IsActive' => true,
+            'IsActive' => "true",
             'Page' => $page
-        ], $params);
-
-        // Map 'search' to 'Name' if provided in params
-        if (isset($params['search']) && !isset($queryParams['Name'])) {
-            $queryParams['Name'] = $params['search'];
+        ]);
+        if (!is_null($search)) {
+            $queryParams['Search'] = $search;
         }
-
         return $this->client->get("{$prefix}/Series", $queryParams)['Content'] ?? [];
     }
 
     // Yeni seri oluştur
-    public function createSeries(string $name, string $mode = 'einvoice', bool $isActive = true, bool $isDefault = false): array
+    public function createSeries(string $name, string $mode = 'einvoice', bool $isActive = true, bool $isDefault = false): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->post("{$prefix}/Series", [
@@ -244,47 +366,335 @@ class Nilvera
         ]) ?? [];
     }
 
+    // Seriyi güncelle
+    public function updateSeries(int $id, ?bool $isActive = null, ?bool $isDefault = null, string $mode = 'einvoice'): bool|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        $data = ['ID' => $id];
+
+        if (!is_null($isActive)) {
+            $data['IsActive'] = $isActive;
+        }
+
+        if (!is_null($isDefault)) {
+            $data['IsDefault'] = $isDefault;
+        }
+
+        return $this->client->put("{$prefix}/Series", $data) ?? false;
+    }
+
+    // Seri detayını getir
+    public function getSeriesDetail(int $id, string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->get("{$prefix}/Series/{$id}") ?? [];
+    }
+
     // Adres defterine ekle
-    public function createCustomer(array $payload): array
+    public function createCustomer(array $payload): array|string
     {
         // Nilvera expects an array of customers
         $data = isset($payload[0]) ? $payload : [$payload];
         return $this->client->post('General/Customers', $data) ?? [];
     }
-    public function getTemplates(string $mode = 'einvoice', array $params = []): array
+
+    // Müşterileri listele
+    public function getCustomers(
+        ?string $search = null,
+        int $pageSize = 30,
+        int $page = 1,
+        ?string $sortColumn = null,
+        ?string $sortType = null
+    ): array|string {
+        $queryParams = [
+            'PageSize' => $pageSize,
+            'Page' => $page,
+        ];
+
+        if (!empty($search)) {
+            $queryParams['Search'] = $search;
+        }
+
+        if (!empty($sortColumn)) {
+            $queryParams['SortColumn'] = $sortColumn;
+        }
+
+        if (!empty($sortType)) {
+            $queryParams['SortType'] = $sortType;
+        }
+
+        return $this->client->get('General/Customers', $queryParams) ?? [
+            'Content' => [],
+            'TotalCount' => 0
+        ];
+    }
+
+    // Müşteri bilgilerini güncelle
+    public function updateCustomer(array $data): bool|string
+    {
+        return $this->client->put('General/Customers', $data) ?? false;
+    }
+
+    // Müşteriyi ID ile getir
+    public function getCustomerById(int $id): array|string
+    {
+        return $this->client->get("General/Customers/{$id}") ?? [];
+    }
+
+    // Müşteriyi sil
+    public function deleteCustomer(int $id): bool|string
+    {
+        return $this->client->delete("General/Customers/{$id}") ?? false;
+    }
+
+    // Müşterileri toplu sil
+    public function bulkDeleteCustomers(array $ids): bool|string
+    {
+        return $this->client->delete('General/Customers/Bulk', $ids) ?? false;
+    }
+
+    // Müşteri listesinde ara
+    public function searchCustomers(string $searchText): array|string
+    {
+        return $this->client->get("General/Customers/Search/{$searchText}") ?? [];
+    }
+
+    // Vergi numarası ile müşteri bilgisini getir
+    public function getCustomerByTaxNumber(string $taxNumber): array|string
+    {
+        return $this->client->get("General/Customers/GetCustomerInfo/{$taxNumber}") ?? [];
+    }
+
+    // Stokları listele
+    public function getStocks(
+        ?string $search = null,
+        int $pageSize = 30,
+        int $page = 1,
+        ?string $sortColumn = null,
+        ?string $sortType = null,
+        ?bool $isActive = null
+    ): array|string {
+        $queryParams = [
+            'PageSize' => $pageSize,
+            'Page' => $page,
+        ];
+
+        if (!empty($search)) {
+            $queryParams['Search'] = $search;
+        }
+
+        if (!empty($sortColumn)) {
+            $queryParams['SortColumn'] = $sortColumn;
+        }
+
+        if (!empty($sortType)) {
+            $queryParams['SortType'] = $sortType;
+        }
+
+        if (!is_null($isActive)) {
+            $queryParams['IsActive'] = $isActive ? 'true' : 'false';
+        }
+
+        return $this->client->get('General/Stocks', $queryParams) ?? [
+            'Content' => [],
+            'TotalCount' => 0
+        ];
+    }
+
+    // Stok ekle
+    public function createStocks(array $payload): array|string
+    {
+        // Nilvera expects an array of stocks
+        $data = isset($payload[0]) ? $payload : [$payload];
+        return $this->client->post('General/Stocks', $data) ?? [];
+    }
+
+    // Stok bilgilerini güncelle
+    public function updateStock(array $data): bool|string
+    {
+        return $this->client->put('General/Stocks', $data) ?? false;
+    }
+
+    // Stoğu ID ile getir
+    public function getStockById(int $id): array|string
+    {
+        return $this->client->get("General/Stocks/{$id}") ?? [];
+    }
+
+    // Stoğu sil
+    public function deleteStock(int $id): bool|string
+    {
+        return $this->client->delete("General/Stocks/{$id}") ?? false;
+    }
+
+    // Stokları toplu sil
+    public function bulkDeleteStocks(array $ids): bool|string
+    {
+        return $this->client->delete('General/Stocks/Bulk', $ids) ?? false;
+    }
+
+    // Stok listesinde ara
+    public function searchStocks(string $searchText): array|string
+    {
+        return $this->client->get("General/Stocks/SearchStock/{$searchText}") ?? [];
+    }
+
+    // Muhasebe raporu oluştur
+    public function createReport(array $data): array|string
+    {
+        return $this->client->post('report/Accounting', $data) ?? [];
+    }
+
+    // Muhasebe raporlarını listele
+    public function getReports(
+        ?string $search = null,
+        int $pageSize = 30,
+        int $page = 1,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?string $reportType = null
+    ): array|string {
+        $queryParams = [
+            'PageSize' => $pageSize,
+            'Page' => $page,
+        ];
+
+        if (!empty($search)) {
+            $queryParams['Search'] = $search;
+        }
+
+        if (!empty($startDate)) {
+            $queryParams['StartDate'] = $startDate;
+        }
+
+        if (!empty($endDate)) {
+            $queryParams['EndDate'] = $endDate;
+        }
+
+        if (!empty($reportType)) {
+            $queryParams['ReportType'] = $reportType;
+        }
+
+        return $this->client->get('report/Accounting', $queryParams) ?? [
+            'Content' => [],
+            'TotalCount' => 0
+        ];
+    }
+
+    // Raporu indir
+    public function downloadReport(string $uuid): array|string
+    {
+        return $this->client->post("report/Accounting/{$uuid}/download") ?? [];
+    }
+
+    // Rapor şablonu oluştur
+    public function createReportTemplate(array $data): array|string
+    {
+        return $this->client->post('report/Accounting/Template', $data) ?? [];
+    }
+
+    // Rapor şablonlarını listele
+    public function getReportTemplates(): array|string
+    {
+        return $this->client->get('report/Accounting/Template') ?? [
+            'Content' => [],
+            'TotalCount' => 0
+        ];
+    }
+
+    public function getTemplates(string $mode = 'einvoice', ?string $search = null, int $pageSize = 100, int $page = 1): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
-        $queryParams = array_merge([
-            'PageSize' => 100,
-            'IsActive' => true
-        ], $params);
+        $queryParams = [
+            'PageSize' => $pageSize,
+            'Page' => $page,
+            'IsActive' => "true"
+        ];
+
+        if (!is_null($search)) {
+            $queryParams['Search'] = $search;
+        }
 
         return $this->client->get("{$prefix}/Templates", $queryParams)['Content'] ?? [];
     }
 
-    // Taslakları listele
-    public function getDraftInvoices(string $mode = 'einvoice', array $params = []): array
+    // Şablonu güncelle
+    public function updateTemplate(int $id, ?string $name = null, ?bool $isActive = null, ?bool $isDefault = null, string $mode = 'einvoice'): bool|string
     {
         $prefix = $this->getPrefixByMode($mode);
 
+        $data = ['ID' => $id];
+
+        if (!is_null($name)) {
+            $data['Name'] = $name;
+        }
+
+        if (!is_null($isActive)) {
+            $data['IsActive'] = $isActive;
+        }
+
+        if (!is_null($isDefault)) {
+            $data['IsDefault'] = $isDefault;
+        }
+
+        return $this->client->put("{$prefix}/Templates", $data) ?? false;
+    }
+
+    // Şablon detayını getir
+    public function getTemplateDetail(int $id, string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->get("{$prefix}/Templates/{$id}") ?? [];
+    }
+
+    // Şablonu sil
+    public function deleteTemplate(int $id, string $mode = 'einvoice'): bool|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->delete("{$prefix}/Templates/{$id}") ?? false;
+    }
+
+    // Şablonu önizle
+    public function previewTemplate(string $uuid, string $mode = 'einvoice')
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->getRaw("{$prefix}/Templates/Preview/{$uuid}");
+    }
+
+    // Taslakları listele
+    public function getDraftInvoices(
+        string $mode = 'einvoice',
+        ?string $search = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        int $pageSize = 30,
+        int $page = 1
+    ): array|string {
+        $prefix = $this->getPrefixByMode($mode);
+
         $queryParams = [
-            'Page' => $params['Page'] ?? 1,
-            'PageSize' => $params['PageSize'] ?? 30,
+            'Page' => $page,
+            'PageSize' => $pageSize,
         ];
 
-        if (!empty($params['Search'])) {
-            $queryParams['Search'] = $params['Search'];
+        if (!empty($search)) {
+            $queryParams['Search'] = $search;
         }
 
-        if (!empty($params['StartDate'])) {
-            $queryParams['StartDate'] = $params['StartDate'] . 'T00:00:00.000Z';
+        if (!empty($startDate)) {
+            $queryParams['StartDate'] = str_contains($startDate, 'T') ? $startDate : $startDate . 'T00:00:00.000Z';
         }
 
-        if (!empty($params['EndDate'])) {
-            $queryParams['EndDate'] = $params['EndDate'] . 'T23:59:59.998Z';
+        if (!empty($endDate)) {
+            $queryParams['EndDate'] = str_contains($endDate, 'T') ? $endDate : $endDate . 'T23:59:59.998Z';
         }
 
-        return $this->client->get("{$prefix}/Draft", $queryParams) ?? [
+        return $this->client->get("{$prefix}/Draft", $queryParams)['Content'] ?? [
             'Content' => [],
             'TotalCount' => 0
         ];
@@ -295,18 +705,18 @@ class Nilvera
     {
         $prefix = $this->getPrefixByMode($mode);
         $path = $direction ? "{$prefix}/{$direction}/{$uuid}/html" : "{$prefix}/Draft/{$uuid}/html";
-        return $this->client->get($path);
+        return $this->client->getRaw($path);
     }
 
     // Fatura ekleri
-    public function getInvoiceAttachments(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array
+    public function getInvoiceAttachments(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->get("{$prefix}/{$direction}/{$uuid}/Attachments") ?? [];
     }
 
     // Fatura detayları
-    public function getInvoiceDetails(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array
+    public function getInvoiceDetails(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->get("{$prefix}/{$direction}/{$uuid}/Details") ?? [];
@@ -315,7 +725,7 @@ class Nilvera
     /**
      * Get despatch info of an invoice.
      */
-    public function getInvoiceDespatchInfo(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array
+    public function getInvoiceDespatchInfo(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->get("{$prefix}/{$direction}/{$uuid}/DespatchInfo") ?? [];
@@ -324,10 +734,51 @@ class Nilvera
     /**
      * Get history of an invoice.
      */
-    public function getInvoiceHistories(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array
+    public function getInvoiceHistories(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->get("{$prefix}/{$direction}/{$uuid}/Histories") ?? [];
+    }
+
+    // Fatura vergi detaylarını getir
+    public function getInvoiceTaxes(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        $segment = $mode === 'earchive' ? 'Invoices' : $direction;
+        return $this->client->get("{$prefix}/{$segment}/{$uuid}/Taxes") ?? [];
+    }
+
+    // Gelen faturaya yanıt ver (kabul/red)
+    public function answerInvoice(string $uuid, string $answerCode, ?string $rejectNote = null, string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        $data = [
+            'UUID' => $uuid,
+            'AnswerCode' => $answerCode,
+        ];
+
+        if (!is_null($rejectNote)) {
+            $data['RejectNote'] = $rejectNote;
+        }
+
+        return $this->client->post("{$prefix}/Purchase/SendAnswer", $data) ?? [];
+    }
+
+    // Red cevabını getir
+    public function getInvoiceRejectedNote(string $uuid, string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->get("{$prefix}/Purchase/{$uuid}/RejectedNote") ?? [];
+    }
+
+    // Faturanın güncel statü bilgisini getir
+    public function getInvoiceStatus(string $uuid, string $direction = 'Sale', string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        $segment = $mode === 'earchive' ? 'Invoices' : $direction;
+        return $this->client->get("{$prefix}/{$segment}/{$uuid}/Status") ?? [];
     }
 
     // Toplu dışa aktarma (PDF, XML, Zarf)
@@ -358,7 +809,7 @@ class Nilvera
     public function getInvoicePdf(string $uuid, string $mode = 'einvoice'): ?string
     {
         $prefix = $this->getPrefixByMode($mode);
-        $base64 = $this->client->get("{$prefix}/Draft/{$uuid}/pdf");
+        $base64 = $this->client->getRaw("{$prefix}/Draft/{$uuid}/pdf");
 
         if (empty($base64)) {
             return null;
@@ -370,7 +821,7 @@ class Nilvera
     }
 
     // Taslak oluştur
-    public function createDraft(array $model, string $mode = 'einvoice'): array
+    public function createDraft(array $model, string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->post("{$prefix}/Draft", $model) ?? [];
@@ -394,15 +845,52 @@ class Nilvera
         return $this->client->post("{$prefix}/Send/Model/Download", $model);
     }
 
+    /**
+     * Download the PDF of a previewed invoice model.
+     */
+    public function downloadInvoicePdf(array $model, string $mode = 'einvoice')
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        return $this->client->postRaw("{$prefix}/Send/Model/Download/Pdf", $model);
+    }
+
+    // Faturayı Base64 (ZIP) olarak gönder
+    public function sendInvoiceBase64(string $zipFileBase64, string $alias, ?string $templateUuid = null, string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        $data = [
+            'ZIPFileBase64' => $zipFileBase64,
+            'Alias' => $alias,
+        ];
+
+        if (!is_null($templateUuid)) {
+            $data['TemplateUUID'] = $templateUuid;
+        }
+
+        return $this->client->post("{$prefix}/Send/Base64String", $data) ?? [];
+    }
+
+    // Base64 (ZIP) faturayı önizle
+    public function previewInvoiceBase64(string $zipFileBase64, string $alias, string $mode = 'einvoice')
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->postRaw("{$prefix}/Send/Base64String/Preview", [
+            'ZIPFileBase64' => $zipFileBase64,
+            'Alias' => $alias,
+        ]);
+    }
+
     // Yeni fatura oluştur ve gönder
-    public function sendNewInvoice(array $model, string $mode = 'einvoice'): array
+    public function sendNewInvoice(array $model, string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->post("{$prefix}/Send", $model) ?? [];
     }
 
     // Taslağı onayla ve gönder
-    public function sendInvoice(string $uuid, ?string $alias = null, string $mode = 'einvoice'): array
+    public function sendInvoice(string $uuid, ?string $alias = null, string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         // User snippet uses Draft/EditAndSend for confirmation/sending
@@ -410,7 +898,7 @@ class Nilvera
     }
 
     // Toplu gönderim
-    public function bulkSendInvoices(array $invoices, string $mode = 'einvoice'): array
+    public function bulkSendInvoices(array $invoices, string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         // If it's a single invoice, use the EditAndSend logic if preferred, 
@@ -424,7 +912,7 @@ class Nilvera
     }
 
     // Taslakları sil
-    public function bulkDeleteInvoices(array $uuids, string $mode = 'einvoice'): array
+    public function bulkDeleteInvoices(array $uuids, string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->delete("{$prefix}/Draft", $uuids) ?? [];
@@ -433,7 +921,7 @@ class Nilvera
     /**
      * Get the data model of a draft invoice.
      */
-    public function getDraftModel(string $uuid, string $mode = 'einvoice'): array
+    public function getDraftModel(string $uuid, string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->get("{$prefix}/Draft/{$uuid}/model") ?? [];
@@ -454,7 +942,7 @@ class Nilvera
     }
 
     // XML/UBL yükle
-    public function uploadXml(string $filePath, string $fileName, string $mode = 'einvoice'): array
+    public function uploadXml(string $filePath, string $fileName, string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->upload("{$prefix}/Upload", $filePath, $fileName) ?? [];
@@ -463,7 +951,7 @@ class Nilvera
     /**
      * Bulk create draft invoices (commonly used for E-Archive).
      */
-    public function createBulkDraft(array $invoices, string $mode = 'earchive'): array
+    public function createBulkDraft(array $invoices, string $mode = 'earchive'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         $payload = [
@@ -479,7 +967,7 @@ class Nilvera
     }
 
     // SGK PDF yükle
-    public function uploadSgkPdf(string $filePath, string $fileName, string $type = 'SAGLIK_ECZ', string $registerCode = ''): array
+    public function uploadSgkPdf(string $filePath, string $fileName, string $type = 'SAGLIK_ECZ', string $registerCode = ''): array|string
     {
         return $this->client->upload('EInvoice/Upload/Sgk', $filePath, $fileName, [
             'Type' => $type,
@@ -488,27 +976,52 @@ class Nilvera
     }
 
     // Gelen/Giden fatura listesi (Filtreli)
-    public function getInvoices(string $direction = 'Sale', array $params = []): array
-    {
+    public function getInvoices(
+        string $direction = 'Sale',
+        ?string $search = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        int $pageSize = 30,
+        int $page = 1,
+        array $extraParams = []
+    ): array|string {
         $prefix = 'EInvoice'; // Based on user snippet for outbox
 
         // Build base query
-        $baseParams = collect($params)->except([
+        $queryParams = [
+            'PageSize' => $pageSize,
+            'Page' => $page,
+        ];
+
+        if (!empty($search)) {
+            $queryParams['Search'] = $search;
+        }
+
+        if (!empty($startDate)) {
+            $queryParams['StartDate'] = str_contains($startDate, 'T') ? $startDate : $startDate . 'T00:00:00.000Z';
+        }
+
+        if (!empty($endDate)) {
+            $queryParams['EndDate'] = str_contains($endDate, 'T') ? $endDate : $endDate . 'T23:59:59.998Z';
+        }
+
+        // Merge with other potential parameters
+        $baseParams = array_merge($queryParams, collect($extraParams)->except([
             'StatusCode',
             'InvoiceProfile',
             'InvoiceType',
             'AnswerCode',
             'IsTransfer'
-        ])->toArray();
+        ])->toArray());
 
         $queryString = http_build_query($baseParams);
 
         // Handle repeated keys
         $filters = [
-            'StatusCode' => $params['StatusCode'] ?? ['succeed', 'error', 'waiting'],
-            'InvoiceProfile' => $params['InvoiceProfile'] ?? ['TEMELFATURA', 'TICARIFATURA', 'HKS', 'KAMU', 'IHRACAT', 'ENERJI', 'ILAC_TIBBICIHAZ', 'YATIRIMTESVIK', 'IDIS'],
-            'InvoiceType' => $params['InvoiceType'] ?? ['SATIS', 'IADE', 'TEVKIFAT', 'TEVKIFATIADE', 'ISTISNA', 'IHRACKAYITLI', 'OZELMATRAH', 'SGK', 'KOMISYONCU', 'KONAKLAMAVERGISI', 'SARJ', 'SARJANLIK'],
-            'AnswerCode' => $params['AnswerCode'] ?? ['approved', 'documentAnsweredAutomatically', 'rejected', 'waitingForApproval'],
+            'StatusCode' => $extraParams['StatusCode'] ?? ['succeed', 'error', 'waiting'],
+            'InvoiceProfile' => $extraParams['InvoiceProfile'] ?? ['TEMELFATURA', 'TICARIFATURA', 'HKS', 'KAMU', 'IHRACAT', 'ENERJI', 'ILAC_TIBBICIHAZ', 'YATIRIMTESVIK', 'IDIS'],
+            'InvoiceType' => $extraParams['InvoiceType'] ?? ['SATIS', 'IADE', 'TEVKIFAT', 'TEVKIFATIADE', 'ISTISNA', 'IHRACKAYITLI', 'OZELMATRAH', 'SGK', 'KOMISYONCU', 'KONAKLAMAVERGISI', 'SARJ', 'SARJANLIK'],
+            'AnswerCode' => $extraParams['AnswerCode'] ?? ['approved', 'documentAnsweredAutomatically', 'rejected', 'waitingForApproval'],
         ];
 
         foreach ($filters as $key => $values) {
@@ -518,15 +1031,15 @@ class Nilvera
             }
         }
 
-        if (isset($params['IsTransfer'])) {
-            $queryString .= "&IsTransfer=" . urlencode($params['IsTransfer']);
+        if (isset($extraParams['IsTransfer'])) {
+            $queryString .= "&IsTransfer=" . urlencode($extraParams['IsTransfer']);
         }
 
         return $this->client->get("{$prefix}/{$direction}?" . $queryString) ?? [];
     }
 
     // Etiketleri getir
-    public function getTags(string $mode = 'einvoice'): array
+    public function getTags(string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->get("{$prefix}/Tags", ['PageSize' => 150, 'Page' => 1]) ?? [];
@@ -535,13 +1048,125 @@ class Nilvera
     /**
      * Update tags for a document.
      */
-    public function updateTags(string $uuid, array $tags, string $status = 'Draft', string $mode = 'einvoice'): array
+    public function updateTags(string $uuid, array $tags, string $status = 'Draft', string $mode = 'einvoice'): array|string
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->put("{$prefix}/{$status}/Tags", [
             'DocumentUUID' => $uuid,
             'Tags' => $tags
         ]) ?? [];
+    }
+
+    // Yeni etiket oluştur
+    public function createTag(string $name, ?string $description = null, ?string $color = null, string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        $data = ['Name' => $name];
+
+        if (!is_null($description)) {
+            $data['Description'] = $description;
+        }
+
+        if (!is_null($color)) {
+            $data['Color'] = $color;
+        }
+
+        return $this->client->post("{$prefix}/Tags", $data) ?? [];
+    }
+
+    // Etiketi güncelle
+    public function updateTag(string $uuid, ?string $name = null, ?string $description = null, ?string $color = null, string $mode = 'einvoice'): bool|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        $data = ['UUID' => $uuid];
+
+        if (!is_null($name)) {
+            $data['Name'] = $name;
+        }
+
+        if (!is_null($description)) {
+            $data['Description'] = $description;
+        }
+
+        if (!is_null($color)) {
+            $data['Color'] = $color;
+        }
+
+        return $this->client->put("{$prefix}/Tags", $data) ?? false;
+    }
+
+    // Etiketi sil
+    public function deleteTag(string $uuid, string $mode = 'einvoice'): bool|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->delete("{$prefix}/Tags/{$uuid}") ?? false;
+    }
+
+    // Satış faturalarına ait bildirim ayarlarını listele
+    public function getSaleNotificationSettings(string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->get("{$prefix}/Notification/Sale") ?? [];
+    }
+
+    // Alış faturalarına ait bildirim ayarlarını listele
+    public function getPurchaseNotificationSettings(string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->get("{$prefix}/Notification/Purchase") ?? [];
+    }
+
+    // Satış faturasına ait bildirim kuralı oluştur
+    public function createSaleNotificationSetting(array $data, string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->post("{$prefix}/Notification/Sale", $data) ?? [];
+    }
+
+    // Alış faturasına ait bildirim kuralı oluştur
+    public function createPurchaseNotificationSetting(array $data, string $mode = 'einvoice'): array|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->post("{$prefix}/Notification/Purchase", $data) ?? [];
+    }
+
+    // Satış faturasına ait bildirim ayarını güncelle
+    public function updateSaleNotificationSetting(array $data, string $mode = 'einvoice'): bool|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->put("{$prefix}/Notification/Sale", $data) ?? false;
+    }
+
+    // Alış faturasına ait bildirim ayarını güncelle
+    public function updatePurchaseNotificationSetting(array $data, string $mode = 'einvoice'): bool|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->put("{$prefix}/Notification/Purchase", $data) ?? false;
+    }
+
+    // Satış faturasına ait bildirim ayarını sil
+    public function deleteSaleNotificationSetting(int $id, string $mode = 'einvoice'): bool|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->delete("{$prefix}/Notification/Sale/{$id}") ?? false;
+    }
+
+    // Alış faturasına ait bildirim ayarını sil
+    public function deletePurchaseNotificationSetting(int $id, string $mode = 'einvoice'): bool|string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+
+        return $this->client->delete("{$prefix}/Notification/Purchase/{$id}") ?? false;
     }
 
     // Toplu arşivleme
@@ -619,6 +1244,13 @@ class Nilvera
         return $this->client->put("{$prefix}/{$endpoint}/Operation/Unread", $uuids) ?? [];
     }
 
+    // Taslaklara toplu yeni durum ata (örn. Print, UnPrint, Transferred, Untransferred)
+    public function updateDraftsStatus(array $uuids, string $operationType, string $mode = 'einvoice'): array
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        return $this->client->put("{$prefix}/Draft/Operation/{$operationType}", $uuids) ?? [];
+    }
+
     // İade faturası oluştur
     public function createReturnInvoice(string $uuid, string $direction = 'Purchase'): array
     {
@@ -641,6 +1273,63 @@ class Nilvera
     {
         $prefix = $this->getPrefixByMode($mode);
         return $this->client->get("{$prefix}/Old", $params) ?? [];
+    }
+
+    // Eski faturanın HTML'ini getir
+    public function getOldInvoiceHtml(string $uuid, string $mode = 'einvoice')
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        return $this->client->getRaw("{$prefix}/Old/{$uuid}/html");
+    }
+
+    // Eski faturanın PDF'ini getir
+    public function getOldInvoicePdf(string $uuid, string $mode = 'einvoice'): ?string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        $base64 = $this->client->getRaw("{$prefix}/Old/{$uuid}/pdf");
+
+        if (empty($base64)) {
+            return null;
+        }
+
+        $base64 = trim($base64, '" ');
+        return base64_decode($base64);
+    }
+
+    // Eski faturanın XML'ini getir
+    public function getOldInvoiceXml(string $uuid, string $mode = 'einvoice'): ?string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        $base64 = $this->client->getRaw("{$prefix}/Old/{$uuid}/xml");
+
+        if (empty($base64)) {
+            return null;
+        }
+
+        $base64 = trim($base64, '" ');
+        return base64_decode($base64);
+    }
+
+    // Eski faturaları toplu dışa aktar (Xml, Pdf, OnePagePdf)
+    public function exportOldInvoices(array $uuids, string $fileType = 'Pdf', string $mode = 'einvoice'): ?string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        $content = $this->client->postRaw("{$prefix}/Old/Export/{$fileType}", $uuids);
+
+        if (empty($content)) {
+            return null;
+        }
+
+        $content = trim($content, '" ');
+        $cleanContent = preg_replace('/[^a-zA-Z0-9\/\+=]/', '', $content);
+        return base64_decode($cleanContent);
+    }
+
+    // Eski faturalara toplu yeni durum ata (UnPrint, Print, Transferred, Untransferred)
+    public function updateOldInvoicesStatus(array $uuids, string $operationType, string $mode = 'einvoice'): array
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        return $this->client->put("{$prefix}/Old/Operation/{$operationType}", $uuids) ?? [];
     }
 
     /**
@@ -667,6 +1356,113 @@ class Nilvera
         return $this->client->put("EArchive/Invoices/{$uuid}/Cancel") ?? [];
     }
 
+    // Faturanın iptal işlemini geri al
+    public function revertCancelEArchiveInvoice(string $uuid): bool|array
+    {
+        return $this->client->put("EArchive/Invoices/{$uuid}/RevertCancel") ?? false;
+    }
+
+    // E-Arşiv raporu gönder (dönem bazlı)
+    public function sendEArchiveReport(int $periodYear, int $periodMonth): array|string
+    {
+        return $this->client->post('EArchive/Send/Report', [
+            'PeriodYear' => $periodYear,
+            'PeriodMonth' => $periodMonth,
+        ]) ?? [];
+    }
+
+    // Gönderilen E-Arşiv raporlarını listele
+    public function getEArchiveReports(
+        int $pageSize = 30,
+        int $page = 1,
+        ?string $sortColumn = null,
+        ?string $sortType = null,
+        ?int $periodYear = null,
+        ?int $periodMonth = null
+    ): array|string {
+        $queryParams = [
+            'PageSize' => $pageSize,
+            'Page' => $page,
+        ];
+
+        if (!empty($sortColumn)) {
+            $queryParams['SortColumn'] = $sortColumn;
+        }
+
+        if (!empty($sortType)) {
+            $queryParams['SortType'] = $sortType;
+        }
+
+        if (!is_null($periodYear)) {
+            $queryParams['PeriodYear'] = $periodYear;
+        }
+
+        if (!is_null($periodMonth)) {
+            $queryParams['PeriodMonth'] = $periodMonth;
+        }
+
+        return $this->client->get('EArchive/Report', $queryParams) ?? [
+            'Content' => [],
+            'TotalCount' => 0
+        ];
+    }
+
+    // Raporlanabilecek (rapora dahil edilebilecek) belgeleri listele
+    public function getEArchiveReportableDocuments(
+        int $pageSize = 30,
+        int $page = 1,
+        ?string $search = null,
+        ?int $periodYear = null,
+        ?int $periodMonth = null
+    ): array|string {
+        $queryParams = [
+            'PageSize' => $pageSize,
+            'Page' => $page,
+        ];
+
+        if (!empty($search)) {
+            $queryParams['Search'] = $search;
+        }
+
+        if (!is_null($periodYear)) {
+            $queryParams['PeriodYear'] = $periodYear;
+        }
+
+        if (!is_null($periodMonth)) {
+            $queryParams['PeriodMonth'] = $periodMonth;
+        }
+
+        return $this->client->get('EArchive/Report/ToReport', $queryParams) ?? [
+            'Content' => [],
+            'TotalCount' => 0
+        ];
+    }
+
+    // Gönderilmiş bir rapordaki belgeleri listele
+    public function getEArchiveReportDocuments(string $uuid, int $pageSize = 30, int $page = 1): array|string
+    {
+        return $this->client->get('EArchive/Report/List', [
+            'UUID' => $uuid,
+            'PageSize' => $pageSize,
+            'Page' => $page,
+        ]) ?? [
+            'Content' => [],
+            'TotalCount' => 0
+        ];
+    }
+
+    // Rapor XML içeriğini indir
+    public function downloadEArchiveReportXml(string $uuid)
+    {
+        return $this->client->getRaw("EArchive/Report/{$uuid}/xml");
+    }
+
+    // Raporun işlem geçmişini getir
+    public function getEArchiveReportHistories(string $uuid): array|string
+    {
+        return $this->client->get("EArchive/Report/{$uuid}/Histories") ?? [];
+    }
+
     // WhatsApp ile gönder
     public function sendWhatsapp(string $uuid, string $phone, string $mode = 'einvoice'): array
     {
@@ -675,6 +1471,42 @@ class Nilvera
             'UUID' => $uuid,
             'Phone' => $phone
         ]) ?? [];
+    }
+
+    // E-Arşiv faturasını mail ile gönder
+    public function sendInvoiceEmail(string $uuid, array $emailAddresses): array|string
+    {
+        return $this->client->post('EArchive/Invoices/Email/Send', [
+            'UUID' => $uuid,
+            'EmailAddresses' => $emailAddresses,
+        ]) ?? [];
+    }
+
+    // E-Arşiv faturasını SMS ile gönder
+    public function sendInvoiceSms(string $uuid, string $phone): bool|array|string
+    {
+        return $this->client->post('EArchive/Invoices/Sms/Send', [
+            'UUID' => $uuid,
+            'Phone' => $phone,
+        ]) ?? [];
+    }
+
+    // Mail aktivitelerini getir
+    public function getMailActivityHistories(string $messageId): array|string
+    {
+        return $this->client->get("EArchive/Invoices/{$messageId}/MailActivityhistories") ?? [];
+    }
+
+    // SMS işlem geçmişini getir
+    public function getSmsHistories(string $uuid): array|string
+    {
+        return $this->client->get("EArchive/Invoices/{$uuid}/Smshistories") ?? [];
+    }
+
+    // WhatsApp işlem geçmişini getir
+    public function getWhatsappHistories(string $uuid): array|string
+    {
+        return $this->client->get("EArchive/Invoices/{$uuid}/Whatsapphistories") ?? [];
     }
 
     /**
@@ -825,7 +1657,11 @@ class Nilvera
      */
     protected function getEndpointByMode(string $mode, string $type): string
     {
+        if ($mode === 'earchive') {
+            return "EArchive/Invoices";
+        }
+
         $prefix = $this->getPrefixByMode($mode);
-        return "{$prefix}/Get{$type}";
+        return "{$prefix}/{$type}";
     }
 }
