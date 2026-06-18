@@ -781,10 +781,12 @@ class Nilvera
         return $this->client->get("{$prefix}/{$segment}/{$uuid}/Status") ?? [];
     }
 
-    // Toplu dışa aktarma (PDF, XML, Zarf)
-    public function exportInvoices(array $uuids, string $format = 'Pdf', string $direction = 'Sale'): ?string
+    // Toplu dışa aktarma (PDF, XML, Zarf) — e-Fatura ve e-Arşiv destekler
+    public function exportInvoices(array $uuids, string $format = 'Pdf', string $direction = 'Sale', string $mode = 'einvoice'): ?string
     {
-        $response = $this->client->post("EInvoice/{$direction}/Export/{$format}", $uuids);
+        $prefix = $this->getPrefixByMode($mode);
+        $segment = $mode === 'earchive' ? 'Invoices' : $direction;
+        $response = $this->client->post("{$prefix}/{$segment}/Export/{$format}", $uuids);
 
         // Handle raw response for binary data
         if (is_array($response) && (isset($response['Content']) || isset($response['Result']))) {
@@ -815,7 +817,44 @@ class Nilvera
             return null;
         }
 
-        // Nilvera returns base64 string, sometimes quoted
+        $base64 = trim($base64, '" ');
+        return base64_decode($base64);
+    }
+
+    /**
+     * Gönderilmiş faturanın PDF içeriğini döndürür (binary).
+     * e-Arşiv: EArchive/Invoices/{uuid}/pdf
+     * e-Fatura: EInvoice/{direction}/{uuid}/pdf
+     */
+    public function getSentInvoicePdf(string $uuid, string $mode = 'einvoice', string $direction = 'Sale'): ?string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        $segment = $mode === 'earchive' ? 'Invoices' : $direction;
+        $base64 = $this->client->getRaw("{$prefix}/{$segment}/{$uuid}/pdf");
+
+        if (empty($base64)) {
+            return null;
+        }
+
+        $base64 = trim($base64, '" ');
+        return base64_decode($base64);
+    }
+
+    /**
+     * Gönderilmiş faturanın XML içeriğini döndürür (binary).
+     * e-Arşiv: EArchive/Invoices/{uuid}/xml
+     * e-Fatura: EInvoice/{direction}/{uuid}/xml
+     */
+    public function getSentInvoiceXml(string $uuid, string $mode = 'einvoice', string $direction = 'Sale'): ?string
+    {
+        $prefix = $this->getPrefixByMode($mode);
+        $segment = $mode === 'earchive' ? 'Invoices' : $direction;
+        $base64 = $this->client->getRaw("{$prefix}/{$segment}/{$uuid}/xml");
+
+        if (empty($base64)) {
+            return null;
+        }
+
         $base64 = trim($base64, '" ');
         return base64_decode($base64);
     }
